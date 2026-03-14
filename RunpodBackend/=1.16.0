@@ -1,0 +1,6 @@
+error: Failed to parse: `pyproject.toml`
+  Caused by: TOML parse error at line 21, column 1
+   |
+21 | [tool.uv.dev-dependencies]
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+invalid type: map, expected a sequence

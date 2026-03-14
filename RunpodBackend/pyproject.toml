@@ -1,0 +1,42 @@
+[project]
+name = "xr-character-backend"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "runpod>=1.7.0",
+    "torch>=2.4.0",
+    "diffusers>=0.30.0",
+    "transformers>=4.40.0",
+    "accelerate>=0.30.0",
+    "safetensors>=0.4.0",
+    "Pillow>=10.0.0",
+    "numpy>=1.26.0",
+    "trimesh>=4.0.0",
+    "huggingface-hub>=0.24.0",
+]
+
+[tool.uv]
+package = false
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "pytest-mock>=3.14",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = [".", "tests"]
+markers = [
+    "gpu: requires CUDA GPU (deselect with '-m not gpu')",
+    "blender: requires Blender installed (deselect with '-m not blender')",
+    "integration: full integration test (deselect with '-m not integration')",
+    "slow: takes >30s to run",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP"]

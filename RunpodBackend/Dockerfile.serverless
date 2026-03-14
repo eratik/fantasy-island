@@ -1,0 +1,68 @@
+# XR Character Creator — Runpod Serverless (Network Volume variant)
+#
+# Lightweight image — model weights live on a Runpod network volume
+# mounted at /workspace/models/, NOT baked into the image.
+#
+# Build:
+#   docker buildx build --platform linux/amd64 -f Dockerfile.serverless -t eratik/xr-character:latest --push .
+
+FROM runpod/pytorch:2.4.0-py3.11-cuda12.4.1-devel-ubuntu22.04
+
+# ---------------------------------------------------------------------------
+# System dependencies
+# ---------------------------------------------------------------------------
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        blender \
+        libgl1 \
+        libglib2.0-0 \
+        git \
+        curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# ---------------------------------------------------------------------------
+# Python dependencies
+# ---------------------------------------------------------------------------
+WORKDIR /app
+
+COPY pyproject.toml ./
+
+# Install deps directly with pip (no lockfile needed for serverless)
+RUN pip install --no-cache-dir \
+    "runpod>=1.7.0" \
+    "torch>=2.4.0" \
+    "diffusers>=0.30.0" \
+    "transformers>=4.40.0" \
+    "accelerate>=0.30.0" \
+    "safetensors>=0.4.0" \
+    "Pillow>=10.0.0" \
+    "numpy>=1.26.0" \
+    "trimesh>=4.0.0" \
+    "huggingface-hub>=0.24.0"
+
+# ---------------------------------------------------------------------------
+# Hunyuan3D — install from source
+# ---------------------------------------------------------------------------
+RUN git clone https://github.com/Tencent/Hunyuan3D-2.git /opt/hunyuan3d && \
+    cd /opt/hunyuan3d && \
+    pip install --no-cache-dir -e ".[inference]"
+
+# ---------------------------------------------------------------------------
+# Application code
+# ---------------------------------------------------------------------------
+COPY handler.py generate_images.py generate_mesh.py auto_rig.py ./
+
+# ---------------------------------------------------------------------------
+# Runtime environment
+# ---------------------------------------------------------------------------
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/app
+ENV BLENDER_PATH=/usr/bin/blender
+
+# Model weights are loaded from network volume at runtime.
+# Set these env vars in the Runpod endpoint config:
+#   FLUX_MODEL_PATH=/workspace/models/flux-schnell
+#   HUNYUAN3D_MODEL_PATH=/workspace/models/hunyuan3d-2
+#   HF_HOME=/workspace/models
+
+CMD ["python", "-u", "handler.py"]
