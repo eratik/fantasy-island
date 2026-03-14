@@ -71,6 +71,9 @@ COPY handler.py generate_images.py generate_mesh.py auto_rig.py ./
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH=/app
 ENV BLENDER_PATH=/usr/bin/blender
+ENV FLUX_MODEL_ID=/runpod-volume/models/flux-schnell
+ENV HUNYUAN3D_MODEL_ID=/runpod-volume/models/hunyuan3d-2
+ENV HF_HOME=/runpod-volume/models
 
 # Model weights are loaded from network volume at runtime.
 # Set these env vars in the Runpod endpoint config:
