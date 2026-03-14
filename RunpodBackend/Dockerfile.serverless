@@ -28,12 +28,12 @@ WORKDIR /app
 COPY pyproject.toml ./
 
 # Install deps directly with pip (no lockfile needed for serverless)
+# Pin diffusers to 0.31.x — 0.32+ has infer_schema incompatibility with torch 2.4
 RUN pip install --no-cache-dir \
     "runpod>=1.7.0" \
-    "torch>=2.4.0" \
-    "diffusers>=0.30.0" \
-    "transformers>=4.40.0" \
-    "accelerate>=0.30.0" \
+    "diffusers>=0.30.0,<0.32.0" \
+    "transformers>=4.40.0,<4.50.0" \
+    "accelerate>=0.30.0,<0.35.0" \
     "safetensors>=0.4.0" \
     "Pillow>=10.0.0" \
     "numpy>=1.26.0" \
