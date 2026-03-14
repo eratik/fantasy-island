@@ -47,10 +47,14 @@ RUN git clone https://github.com/Tencent/Hunyuan3D-2.git /opt/hunyuan3d && \
     cd /opt/hunyuan3d && \
     pip install --no-cache-dir -e ".[inference]"
 
-# Force-downgrade diffusers AFTER Hunyuan3D install — Hunyuan3D pulls in
-# a bleeding-edge diffusers with attention_dispatch.py that uses
-# _custom_op signatures incompatible with torch 2.4's infer_schema.
-RUN pip install --no-cache-dir --force-reinstall "diffusers==0.31.0"
+# Force-pin compatible versions AFTER Hunyuan3D install — Hunyuan3D pulls in
+# bleeding-edge versions of diffusers, transformers, and huggingface-hub that
+# are incompatible with torch 2.4 and each other.
+RUN pip install --no-cache-dir --force-reinstall \
+    "diffusers==0.31.0" \
+    "transformers==4.44.2" \
+    "huggingface-hub==0.25.2" \
+    "accelerate==0.33.0"
 
 # ---------------------------------------------------------------------------
 # Application code
