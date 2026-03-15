@@ -390,8 +390,11 @@ def auto_rig(
         )
 
     if not Path(output_glb_path).exists():
+        stderr_tail = "\n".join(result.stderr.splitlines()[-30:]) if result.stderr else ""
+        stdout_tail = "\n".join(result.stdout.splitlines()[-30:]) if result.stdout else ""
         raise RuntimeError(
-            f"Blender exited successfully but output file not found: {output_glb_path}"
+            f"Blender exited successfully but output file not found: {output_glb_path}\n"
+            f"STDOUT:\n{stdout_tail}\nSTDERR:\n{stderr_tail}"
         )
 
     logger.info("Auto-rig complete: %s", output_glb_path)
