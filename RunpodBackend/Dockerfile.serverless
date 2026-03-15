@@ -18,10 +18,15 @@ RUN apt-get update && \
         libglib2.0-0 \
         git \
         curl \
-    && rm -rf /var/lib/apt/lists/* \
-    && BLENDER_PY=$(blender --background --python-expr "import sys; print(sys.executable)" 2>&1 | grep -E "^/") \
-    && $BLENDER_PY -m ensurepip \
-    && $BLENDER_PY -m pip install numpy
+    && rm -rf /var/lib/apt/lists/*
+
+# Blender's bundled Python needs numpy for GLB import.
+# Symlink the system numpy into Blender's Python site-packages.
+RUN BLENDER_PYLIB=$(find /usr/share/blender -name "site-packages" -type d 2>/dev/null | head -1) \
+    && if [ -n "$BLENDER_PYLIB" ]; then \
+         ln -sf /usr/local/lib/python3.11/dist-packages/numpy "$BLENDER_PYLIB/numpy"; \
+         ln -sf /usr/local/lib/python3.11/dist-packages/numpy.libs "$BLENDER_PYLIB/numpy.libs" 2>/dev/null; \
+       fi
 
 # ---------------------------------------------------------------------------
 # Python dependencies
