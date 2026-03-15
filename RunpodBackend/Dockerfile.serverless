@@ -18,7 +18,8 @@ RUN apt-get update && \
         libglib2.0-0 \
         git \
         curl \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && blender --background --python-expr "import subprocess; subprocess.check_call(['pip', 'install', 'numpy'])"
 
 # ---------------------------------------------------------------------------
 # Python dependencies
