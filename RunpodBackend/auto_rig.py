@@ -343,9 +343,23 @@ def auto_rig(
 
     Path(output_glb_path).parent.mkdir(parents=True, exist_ok=True)
 
+    # Convert GLB to OBJ before passing to Blender — Blender's glTF importer
+    # requires numpy which may not be available in Blender's bundled Python.
+    # OBJ import is built-in and has no such dependency.
+    actual_input = input_mesh_path
+    if input_mesh_path.lower().endswith(".glb") or input_mesh_path.lower().endswith(".gltf"):
+        import trimesh  # type: ignore[import]
+
+        logger.info("Converting %s to OBJ for Blender compatibility", input_mesh_path)
+        obj_path = str(Path(input_mesh_path).with_suffix(".obj"))
+        mesh = trimesh.load(input_mesh_path)
+        mesh.export(obj_path, file_type="obj")
+        actual_input = obj_path
+        logger.info("Converted to %s", obj_path)
+
     logger.info(
         "Starting Blender auto-rig: %s → %s (poly_target=%d)",
-        input_mesh_path,
+        actual_input,
         output_glb_path,
         poly_target,
     )
@@ -357,7 +371,7 @@ def auto_rig(
         "--python-expr",
         _BLENDER_SCRIPT,
         "--",
-        input_mesh_path,
+        actual_input,
         output_glb_path,
         str(poly_target),
     ]
