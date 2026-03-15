@@ -275,22 +275,16 @@ bpy.ops.object.parent_set(type="ARMATURE_AUTO")
 
 print("[auto_rig] automatic weight painting complete")
 
-# ---- Export as GLB -----------------------------------------------------
+# ---- Export as OBJ (GLB export requires numpy which Blender 3.0 lacks) ---
+# We export as OBJ from Blender, then convert to GLB via trimesh in the wrapper.
 bpy.ops.object.select_all(action="SELECT")
-bpy.ops.export_scene.gltf(
-    filepath=output_path,
-    export_format="GLB",
-    use_selection=False,
-    export_animations=False,
-    export_materials="EXPORT",
-    export_texcoords=True,
-    export_normals=True,
-    export_colors=True,
-    export_skins=True,
-    export_morph=False,
-)
+obj_output = output_path.rsplit(".", 1)[0] + ".obj"
+try:
+    bpy.ops.wm.obj_export(filepath=obj_output, export_selected_objects=False)
+except AttributeError:
+    bpy.ops.export_scene.obj(filepath=obj_output, use_selection=False)
 
-print(f"[auto_rig] exported rigged mesh to {output_path}")
+print(f"[auto_rig] exported rigged mesh to {obj_output}")
 sys.exit(0)
 """)
 
@@ -406,6 +400,20 @@ def auto_rig(
         raise RuntimeError(
             f"Blender auto-rig failed (exit code {result.returncode}):\n{stderr_tail}"
         )
+
+    # Blender exports as OBJ (GLB export needs numpy which Blender 3.0 lacks).
+    # Convert OBJ → GLB using trimesh.
+    obj_output = str(Path(output_glb_path).with_suffix(".obj"))
+    if Path(obj_output).exists():
+        logger.info("Converting Blender OBJ output to GLB: %s → %s", obj_output, output_glb_path)
+        import trimesh  # type: ignore[import]
+
+        mesh = trimesh.load(obj_output)
+        mesh.export(output_glb_path, file_type="glb")
+        Path(obj_output).unlink(missing_ok=True)  # Clean up OBJ
+        mtl_path = Path(obj_output).with_suffix(".mtl")
+        mtl_path.unlink(missing_ok=True)
+        logger.info("Converted to GLB: %s", output_glb_path)
 
     if not Path(output_glb_path).exists():
         stderr_tail = "\n".join(result.stderr.splitlines()[-30:]) if result.stderr else ""
