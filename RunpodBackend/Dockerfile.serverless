@@ -19,7 +19,9 @@ RUN apt-get update && \
         git \
         curl \
     && rm -rf /var/lib/apt/lists/* \
-    && blender --background --python-expr "import subprocess; subprocess.check_call(['pip', 'install', 'numpy'])"
+    && BLENDER_PY=$(blender --background --python-expr "import sys; print(sys.executable)" 2>&1 | grep -E "^/") \
+    && $BLENDER_PY -m ensurepip \
+    && $BLENDER_PY -m pip install numpy
 
 # ---------------------------------------------------------------------------
 # Python dependencies
