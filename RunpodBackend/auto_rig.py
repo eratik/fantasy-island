@@ -52,7 +52,11 @@ ext = input_path.rsplit(".", 1)[-1].lower()
 if ext == "glb" or ext == "gltf":
     bpy.ops.import_scene.gltf(filepath=input_path)
 elif ext == "obj":
-    bpy.ops.wm.obj_import(filepath=input_path)
+    # Blender 3.4+ uses wm.obj_import; 3.0 uses import_scene.obj
+    try:
+        bpy.ops.wm.obj_import(filepath=input_path)
+    except AttributeError:
+        bpy.ops.import_scene.obj(filepath=input_path)
 elif ext == "fbx":
     bpy.ops.import_scene.fbx(filepath=input_path)
 else:
