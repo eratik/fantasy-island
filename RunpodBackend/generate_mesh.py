@@ -47,8 +47,8 @@ def _load_hunyuan() -> object:
     _pipeline = Hunyuan3DDiTFlowMatchingPipeline.from_pretrained(
         _MODEL_ID,
         torch_dtype=torch.float16,
-        token=hf_token,
-    ).to("cuda")
+    )
+    _pipeline.to("cuda")
 
     logger.info("Hunyuan3D 2.1 pipeline loaded successfully")
     return _pipeline
@@ -165,10 +165,16 @@ def generate_mesh(
             output_type="mesh",
         )
 
-        mesh = result.meshes[0]
+        # Hunyuan3D returns either a list of meshes or an object with .meshes
+        if isinstance(result, list):
+            mesh = result[0]
+        elif hasattr(result, "meshes"):
+            mesh = result.meshes[0]
+        else:
+            mesh = result
         logger.info("Shape generation complete. Exporting mesh to %s", output_path)
 
-        # Export as GLB with embedded textures.
+        # Export as GLB — try native .export(), fall back to trimesh
         _export_glb(mesh, output_path)
 
     except Exception as exc:
@@ -204,6 +210,13 @@ def _export_glb(mesh: object, output_path: str) -> None:
             vertices=mesh.vertices,
             faces=mesh.faces,
             vertex_colors=getattr(mesh, "vertex_colors", None),
+        )
+    elif hasattr(mesh, "mesh_v") and hasattr(mesh, "mesh_f"):
+        # Hunyuan3D internal format uses mesh_v (vertices) and mesh_f (faces)
+        import numpy as np
+        tm = trimesh.Trimesh(
+            vertices=np.array(mesh.mesh_v),
+            faces=np.array(mesh.mesh_f),
         )
     else:
         raise RuntimeError(
